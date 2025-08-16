@@ -1,0 +1,17 @@
+fcos_object_detection_node:
+  ros__parameters:
+    # ROS parameters for the FCN segmentation node
+    input_topic: "kitti/camera/color/left/image_raw"
+    output_topic: "fcos_object_detection"
+    output_overlay_topic: "fcos_object_detection_overlay"
+    queue_size: 10  # QoS parameter
+    processing_frequency: 50.0  # Hz
+    max_processing_queue_size: 3  # Maximum number of queue
+    # Model parameters
+    engine_package: "fcn_trt_backend"  # Just put the package name here. The actual path will be constructed in the code.
+    engine_filename: "fcn_resnet101_374x1238.engine"
+    width: 1238
+    height: 374
+    num_classes: 21
+    warmup_iterations: 2 # Warmup iterations for better performance
+    log_level: 3  # 0: Internal Error, 1: Error , 2: Warning, 3: Info, 4: Verbose
