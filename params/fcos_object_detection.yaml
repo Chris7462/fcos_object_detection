@@ -1,0 +1,26 @@
+fcos_object_detection_node:
+  ros__parameters:
+    # ROS parameters for the FCOS object detection node
+    input_topic: "kitti/camera/color/left/image_raw"
+    output_topic: "fcos_object_detection"
+    queue_size: 10  # QoS parameter
+    processing_frequency: 50.0  # Hz
+    max_processing_queue_size: 3  # Maximum number of queue
+
+    # Model parameters
+    engine_package: "fcos_trt_backend"  # Just put the package name here. The actual path will be constructed in the code.
+    engine_filename: "fcos_resnet50_fpn_374x1238.engine"
+
+    # Backbone config parameters
+    backbone_config:
+      height: 374
+      width: 1238
+      warmup_iterations: 2 # Warmup iterations for better performance
+      log_level: 3  # 0: Internal Error, 1: Error , 2: Warning, 3: Info, 4: Verbose
+
+    # PostProcessor config parameters
+    porsprocessor_config:
+      score_thresh: 0.2 # Score threshold for filtering
+      nms_thresh: 0.6 # NMS threshold
+      detections_per_img: 100 # Maximum detections per image
+      topk_candidates: 1000 # Top-k candidates before NMS
