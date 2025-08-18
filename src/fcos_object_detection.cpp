@@ -74,7 +74,8 @@ bool FCOSObjectDetection::initialize_parameters()
     }
 
     // Declare and get parameters with validation
-    std::string engine_package = declare_parameter("engine_package", std::string("fcos_trt_backend"));
+    std::string engine_package = declare_parameter("engine_package",
+      std::string("fcos_trt_backend"));
     std::string engine_filename = declare_parameter("engine_filename",
       std::string("fcos_resnet50_fpn_374x1238.engine"));
     if (engine_filename.empty()) {
@@ -85,25 +86,32 @@ bool FCOSObjectDetection::initialize_parameters()
     // Construct engine file path
     fs::path package_path = ament_index_cpp::get_package_share_directory(engine_package);
     engine_path_ = package_path / "engines" / engine_filename;
-    RCLCPP_INFO(get_logger(), "Parameters initialized - Loading engine form: %s.", engine_path_.c_str());
+    RCLCPP_INFO(get_logger(), "Parameters initialized - Loading engine form: %s.",
+      engine_path_.c_str());
 
     // Backbone config
     backbone_config_.height = declare_parameter<int>("backbone_config.height", 374);
     backbone_config_.width = declare_parameter<int>("backbone_config.width", 1238);
-    backbone_config_.warmup_iterations = declare_parameter<int>("backbone_config.warmup_iterations", 2);
+    backbone_config_.warmup_iterations =
+      declare_parameter<int>("backbone_config.warmup_iterations", 2);
     backbone_config_.log_level = static_cast<fcos_trt_backend::Logger::Severity>(
       declare_parameter<int>("backbone_config.log_level", 3)); // Set log level
 
     if (backbone_config_.width <= 0 || backbone_config_.height <= 0) {
-      RCLCPP_ERROR(get_logger(), "Invalid image dimensions: %dx%d", backbone_config_.width, backbone_config_.height);
+      RCLCPP_ERROR(get_logger(), "Invalid image dimensions: %dx%d",
+        backbone_config_.width, backbone_config_.height);
       return false;
     }
 
     // PostProcessor config
-    postprocessor_config_.score_thresh = declare_parameter<float>("postprocessor_config.score_thresh", 0.2f);
-    postprocessor_config_.nms_thresh = declare_parameter<float>("postprocessor_config.nms_thresh", 0.6f);
-    postprocessor_config_.detections_per_img = declare_parameter<int>("postprocessor_config.detections_per_img", 100);
-    postprocessor_config_.topk_candidates = declare_parameter<int>("postprocessor_config.topk_candidates", 1000);
+    postprocessor_config_.score_thresh =
+      declare_parameter<float>("postprocessor_config.score_thresh", 0.2f);
+    postprocessor_config_.nms_thresh =
+      declare_parameter<float>("postprocessor_config.nms_thresh", 0.6f);
+    postprocessor_config_.detections_per_img =
+      declare_parameter<int>("postprocessor_config.detections_per_img", 100);
+    postprocessor_config_.topk_candidates =
+      declare_parameter<int>("postprocessor_config.topk_candidates", 1000);
 
     return true;
 
@@ -245,68 +253,14 @@ void FCOSObjectDetection::timer_callback()
     // Backbone inference
     auto head_outputs = backbone_->infer(cv_ptr->image);
     auto detection_results = postprocessor_->postprocess_detections(
-      head_outputs,
-      cv_ptr->image.rows, // Height
-      cv_ptr->image.cols  // Width
-    );
+      head_outputs, cv_ptr->image.rows, cv_ptr->image.cols);
 
     // Plot detection results
-    if (!detection_results.boxes.empty()) {
-      cv::Mat image_for_plot = cv_ptr->image.clone();
-      int detection_count = 0;
+    cv::Mat image_for_plot = fcos_trt_backend::utils::plot_detections(
+      cv_ptr->image, detection_results, 0.5f);
 
-      // Draw predictions with confidence > threshold
-      float confidence_threshold = 0.5f;
-      for (size_t i = 0; i < detection_results.boxes.size(); ++i) {
-        if (detection_results.scores[i] >= confidence_threshold) {
-          detection_count++;
-          const auto& box = detection_results.boxes[i];
+    publish_detection_result(image_for_plot, msg->header);
 
-          // Calculate bounding box coordinates
-          int x1 = static_cast<int>(box.x);
-          int y1 = static_cast<int>(box.y);
-          int x2 = static_cast<int>(box.x + box.width);
-          int y2 = static_cast<int>(box.y + box.height);
-
-          // Draw bounding box in green
-          cv::rectangle(image_for_plot, cv::Point(x1, y1), cv::Point(x2, y2),
-                       cv::Scalar(0, 255, 0), 2);
-
-         // Get class name (assuming you have a method to get class names)
-          int label_id = detection_results.labels[i];
-          std::string class_name = fcos_trt_backend::utils::get_class_name(label_id);
-
-          // Create label text with confidence score
-          std::string label_text = class_name + ": " +
-            std::to_string(detection_results.scores[i]).substr(0, 5);
-
-          // Calculate text size for background rectangle
-          int baseline = 0;
-          cv::Size text_size = cv::getTextSize(label_text, cv::FONT_HERSHEY_SIMPLEX,
-            0.55, 1.8, &baseline);
-
-          // Draw background rectangle for text
-          cv::rectangle(image_for_plot,
-            cv::Point(x1, y1 - text_size.height - 4),
-            cv::Point(x1 + text_size.width, y1),
-            cv::Scalar(0, 255, 0), -1);
-
-          // Draw text
-          cv::putText(image_for_plot, label_text, cv::Point(x1, y1 - 4),
-            cv::FONT_HERSHEY_SIMPLEX, 0.55, cv::Scalar(0, 0, 0), 1.8);
-        }
-      }
-
-      // Log detection count
-      RCLCPP_DEBUG(get_logger(), "Detected %d objects", detection_count);
-      publish_detection_result(image_for_plot, msg->header);
-
-    } else {
-      // No detections found, publish original image or skip
-      RCLCPP_DEBUG(get_logger(), "No objects detected");
-      // Optionally publish original image when no detections
-      publish_detection_result(cv_ptr->image, msg->header);
-    }
   } catch (const cv_bridge::Exception & e) {
     RCLCPP_ERROR(get_logger(), "cv_bridge exception: %s", e.what());
   } catch (const std::exception & e) {
