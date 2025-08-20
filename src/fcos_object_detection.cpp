@@ -215,11 +215,6 @@ void FCOSObjectDetection::timer_callback()
     return;
   }
 
-  // Check if we have subscribers before processing
-  if (fcos_pub_->get_subscription_count() == 0) {
-    return;
-  }
-
   // Get next image from queue
   sensor_msgs::msg::Image::SharedPtr msg;
   bool has_image = false;
@@ -259,7 +254,9 @@ void FCOSObjectDetection::timer_callback()
     cv::Mat image_for_plot = fcos_trt_backend::utils::plot_detections(
       cv_ptr->image, detection_results, 0.5f);
 
-    publish_detection_result(image_for_plot, msg->header);
+    if (fcos_pub_->get_subscription_count() > 0) {
+      publish_detection_result(image_for_plot, msg->header);
+    }
 
   } catch (const cv_bridge::Exception & e) {
     RCLCPP_ERROR(get_logger(), "cv_bridge exception: %s", e.what());
