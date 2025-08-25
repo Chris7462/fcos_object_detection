@@ -56,7 +56,7 @@ bool FCOSObjectDetection::initialize_parameters()
     // ROS2 parameters
     input_topic_ = declare_parameter("input_topic",
       std::string("kitti/camera/color/left/image_raw"));
-    output_topic_ = declare_parameter("output_topic", std::string("fcos_object_detection"));
+    output_topic_ = declare_parameter("output_topic", std::string("fcos_object_detection/image"));
     queue_size_ = declare_parameter<int>("queue_size", 10);
 
     processing_frequency_ = declare_parameter<double>("processing_frequency", 40.0);
@@ -255,7 +255,7 @@ void FCOSObjectDetection::timer_callback()
       cv_ptr->image, detection_results, 0.5f);
 
     if (fcos_pub_->get_subscription_count() > 0) {
-      publish_detection_result(image_for_plot, msg->header);
+      publish_detection_result_image(image_for_plot, msg->header);
     }
 
   } catch (const cv_bridge::Exception & e) {
@@ -268,7 +268,7 @@ void FCOSObjectDetection::timer_callback()
   processing_in_progress_.store(false);
 }
 
-void FCOSObjectDetection::publish_detection_result(
+void FCOSObjectDetection::publish_detection_result_image(
   const cv::Mat & detection,
   const std_msgs::msg::Header & header)
 {

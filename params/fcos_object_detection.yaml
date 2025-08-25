@@ -2,7 +2,7 @@ fcos_object_detection_node:
   ros__parameters:
     # ROS parameters for the FCOS object detection node
     input_topic: "kitti/camera/color/left/image_raw"
-    output_topic: "fcos_object_detection"
+    output_topic: "fcos_object_detection/image"
     queue_size: 10  # QoS parameter
     processing_frequency: 50.0  # Hz
     max_processing_queue_size: 3  # Maximum number of queue

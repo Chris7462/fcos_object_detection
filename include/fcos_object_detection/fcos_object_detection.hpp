@@ -73,7 +73,7 @@ private:
    * @param detection Object detection result as OpenCV Mat
    * @param header Original message header for timestamp consistency
    */
-  void publish_detection_result(
+  void publish_detection_result_image(
     const cv::Mat & detection,
     const std_msgs::msg::Header & header);
 
