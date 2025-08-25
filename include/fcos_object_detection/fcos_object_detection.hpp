@@ -12,11 +12,13 @@
 #include <rclcpp/callback_group.hpp>
 #include <std_msgs/msg/header.hpp>
 #include <sensor_msgs/msg/image.hpp>
+#include <vision_msgs/msg/detection2_d_array.hpp>
 
 //// OpenCV header
 #include <opencv2/core.hpp>
 
 // local header
+#include "fcos_trt_backend/fcos_types.hpp"
 #include "fcos_trt_backend/fcos_backbone.hpp"
 #include "fcos_trt_backend/fcos_post_processor.hpp"
 
@@ -69,18 +71,29 @@ private:
   void timer_callback();
 
   /**
-   * @brief Publish object detection result
+   * @brief Publish object detection result in detection 2D array
+   * @param detection Object detection result as Detection type
+   * @param confidence_threshold Detected objects won't be published if less than this value.
+   */
+  void publish_detections(
+    const fcos_trt_backend::Detections & detections,
+    const std_msgs::msg::Header & header,
+    float confidence_threshold = 0.5f);
+
+  /**
+   * @brief Publish object detection result in image
    * @param detection Object detection result as OpenCV Mat
    * @param header Original message header for timestamp consistency
    */
-  void publish_detection_result(
-    const cv::Mat & detection,
+  void publish_detection_result_image(
+    const cv::Mat & result_image,
     const std_msgs::msg::Header & header);
 
 private:
   // ROS2 components
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr img_sub_;
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr fcos_pub_;
+  rclcpp::Publisher<vision_msgs::msg::Detection2DArray>::SharedPtr det_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   // Callback groups for parallel execution
@@ -94,6 +107,7 @@ private:
   // ROS2 parameters
   std::string input_topic_;
   std::string output_topic_;
+  std::string detection_topic_;
   int queue_size_;
   double processing_frequency_;
   int max_processing_queue_size_;
@@ -102,6 +116,7 @@ private:
   fcos_trt_backend::FCOSPostProcessor::Config postprocessor_config_;
   fs::path engine_path_;
   std::string engine_filename_;
+  float detection_confidence_threshold_;
 
   // Simplified image buffer
   std::queue<sensor_msgs::msg::Image::SharedPtr> img_buff_;
