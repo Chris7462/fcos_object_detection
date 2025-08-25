@@ -25,3 +25,5 @@ fcos_object_detection_node:
       nms_thresh: 0.6 # NMS threshold
       detections_per_img: 100 # Maximum detections per image
       topk_candidates: 1000 # Top-k candidates before NMS
+
+    detection_confidence_threshold: 0.5 # object's confidence less than this value won't be published

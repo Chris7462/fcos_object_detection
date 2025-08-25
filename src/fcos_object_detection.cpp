@@ -115,6 +115,9 @@ bool FCOSObjectDetection::initialize_parameters()
     postprocessor_config_.topk_candidates =
       declare_parameter<int>("postprocessor_config.topk_candidates", 1000);
 
+    detection_confidence_threshold_ =
+      declare_parameter<float>("detection_confidence_threshold", 0.5f);
+
     return true;
 
   } catch (const std::exception & e) {
@@ -254,12 +257,12 @@ void FCOSObjectDetection::timer_callback()
       head_outputs, cv_ptr->image.rows, cv_ptr->image.cols);
 
     if (det_pub_->get_subscription_count() > 0) {
-      publish_detections(detection_results, msg->header, 0.5f);
+      publish_detections(detection_results, msg->header, detection_confidence_threshold_);
     }
 
     // Plot detection results
     cv::Mat image_for_plot = fcos_trt_backend::utils::plot_detections(
-      cv_ptr->image, detection_results, 0.5f);
+      cv_ptr->image, detection_results, detection_confidence_threshold_);
 
     if (fcos_pub_->get_subscription_count() > 0) {
       publish_detection_result_image(image_for_plot, msg->header);

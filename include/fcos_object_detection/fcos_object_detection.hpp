@@ -116,6 +116,7 @@ private:
   fcos_trt_backend::FCOSPostProcessor::Config postprocessor_config_;
   fs::path engine_path_;
   std::string engine_filename_;
+  float detection_confidence_threshold_;
 
   // Simplified image buffer
   std::queue<sensor_msgs::msg::Image::SharedPtr> img_buff_;
