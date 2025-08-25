@@ -11,6 +11,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(vision_msgs REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(fcos_trt_backend REQUIRED)
@@ -26,6 +27,7 @@ target_include_directories(fcos_object_detection_node PUBLIC
 ament_target_dependencies(fcos_object_detection_node PUBLIC
   rclcpp
   sensor_msgs
+  vision_msgs
   ament_index_cpp
   cv_bridge
   fcos_trt_backend)

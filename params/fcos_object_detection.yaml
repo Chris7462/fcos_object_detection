@@ -3,6 +3,7 @@ fcos_object_detection_node:
     # ROS parameters for the FCOS object detection node
     input_topic: "kitti/camera/color/left/image_raw"
     output_topic: "fcos_object_detection/image"
+    detection_topic: "fcos_object_detection/detection_array"
     queue_size: 10  # QoS parameter
     processing_frequency: 50.0  # Hz
     max_processing_queue_size: 3  # Maximum number of queue
@@ -19,7 +20,7 @@ fcos_object_detection_node:
       log_level: 3  # 0: Internal Error, 1: Error , 2: Warning, 3: Info, 4: Verbose
 
     # PostProcessor config parameters
-    porsprocessor_config:
+    prosprocessor_config:
       score_thresh: 0.2 # Score threshold for filtering
       nms_thresh: 0.6 # NMS threshold
       detections_per_img: 100 # Maximum detections per image

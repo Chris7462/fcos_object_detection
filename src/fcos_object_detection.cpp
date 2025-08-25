@@ -57,6 +57,8 @@ bool FCOSObjectDetection::initialize_parameters()
     input_topic_ = declare_parameter("input_topic",
       std::string("kitti/camera/color/left/image_raw"));
     output_topic_ = declare_parameter("output_topic", std::string("fcos_object_detection/image"));
+    detection_topic_ = declare_parameter("detection_topic",
+      std::string("fcos_object_detection/detection_array"));
     queue_size_ = declare_parameter<int>("queue_size", 10);
 
     processing_frequency_ = declare_parameter<double>("processing_frequency", 40.0);
@@ -172,6 +174,7 @@ void FCOSObjectDetection::initialize_ros_components()
 
   // Create publisher
   fcos_pub_ = create_publisher<sensor_msgs::msg::Image>(output_topic_, image_qos);
+  det_pub_ = create_publisher<vision_msgs::msg::Detection2DArray>(detection_topic_, queue_size_);
 
   // Create timer for processing at specified frequency
   auto timer_period = std::chrono::duration<double>(1.0 / processing_frequency_);
@@ -250,6 +253,10 @@ void FCOSObjectDetection::timer_callback()
     auto detection_results = postprocessor_->postprocess_detections(
       head_outputs, cv_ptr->image.rows, cv_ptr->image.cols);
 
+    if (det_pub_->get_subscription_count() > 0) {
+      publish_detections(detection_results, msg->header, 0.5f);
+    }
+
     // Plot detection results
     cv::Mat image_for_plot = fcos_trt_backend::utils::plot_detections(
       cv_ptr->image, detection_results, 0.5f);
@@ -268,8 +275,56 @@ void FCOSObjectDetection::timer_callback()
   processing_in_progress_.store(false);
 }
 
+void FCOSObjectDetection::publish_detections(
+  const fcos_trt_backend::Detections & detections,
+  const std_msgs::msg::Header & header,
+  float confidence_threshold)
+{
+  // Input validation
+  if (detections.boxes.empty()) {
+    // Publish empty message to maintain message flow
+    vision_msgs::msg::Detection2DArray empty_msg;
+    empty_msg.header = header;
+    det_pub_->publish(empty_msg);
+    return;
+  }
+
+  vision_msgs::msg::Detection2DArray msg;
+  msg.header = header;
+
+  size_t published_count = 0;
+  for (size_t i = 0; i < detections.boxes.size(); ++i) {
+    if (detections.scores[i] >= confidence_threshold) {
+      // Fill bbox
+      vision_msgs::msg::Detection2D det;
+      const auto & box = detections.boxes[i];
+      det.bbox.center.position.x = box.x + box.width / 2.0f;
+      det.bbox.center.position.y = box.y + box.height / 2.0f;
+      det.bbox.size_x = box.width;
+      det.bbox.size_y = box.height;
+
+      // Fill classification result
+      vision_msgs::msg::ObjectHypothesisWithPose hyp;
+      hyp.hypothesis.class_id = fcos_trt_backend::utils::get_class_name(detections.labels[i]);
+      hyp.hypothesis.score = static_cast<double>(detections.scores[i]);
+
+      det.results.emplace_back(std::move(hyp));
+      msg.detections.emplace_back(std::move(det));
+      ++published_count;
+    }
+  }
+
+  try {
+    det_pub_->publish(msg);
+    RCLCPP_DEBUG(get_logger(), "Published %zu/%zu detections (confidence >= %.2f)",
+      published_count, detections.boxes.size(), confidence_threshold);
+  } catch (const std::exception & e) {
+    RCLCPP_ERROR(get_logger(), "Failed to publish detections: %s", e.what());
+  }
+}
+
 void FCOSObjectDetection::publish_detection_result_image(
-  const cv::Mat & detection,
+  const cv::Mat & result_image,
   const std_msgs::msg::Header & header)
 {
   try {
@@ -277,7 +332,7 @@ void FCOSObjectDetection::publish_detection_result_image(
     cv_bridge::CvImage cv_image;
     cv_image.header = header;
     cv_image.encoding = sensor_msgs::image_encodings::BGR8; // Always colored segmentation
-    cv_image.image = detection;
+    cv_image.image = result_image;
 
     // Publish the result
     auto output_msg = cv_image.toImageMsg();
