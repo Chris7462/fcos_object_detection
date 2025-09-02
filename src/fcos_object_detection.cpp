@@ -261,8 +261,9 @@ void FCOSObjectDetection::timer_callback()
     }
 
     // Plot detection results
-    cv::Mat image_for_plot = fcos_trt_backend::utils::plot_detections(
-      cv_ptr->image, detection_results, detection_confidence_threshold_);
+    cv::Mat image_for_plot = cv_ptr->image.clone();
+    fcos_trt_backend::utils::plot_detections(image_for_plot,
+      detection_results, detection_confidence_threshold_);
 
     if (fcos_pub_->get_subscription_count() > 0) {
       publish_detection_result_image(image_for_plot, msg->header);

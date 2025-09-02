@@ -14,7 +14,7 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <vision_msgs/msg/detection2_d_array.hpp>
 
-//// OpenCV header
+// OpenCV header
 #include <opencv2/core.hpp>
 
 // local header
@@ -48,7 +48,7 @@ private:
    */
   bool initialize_parameters();
 
-    /**
+  /**
    * @brief Initialize TensorRT inferencer
    * @return true if initialization successful, false otherwise
    */
