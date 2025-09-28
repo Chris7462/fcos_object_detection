@@ -160,13 +160,13 @@ void FCOSObjectDetection::initialize_ros_components()
   image_qos.durability(rclcpp::DurabilityPolicy::Volatile);
   image_qos.history(rclcpp::HistoryPolicy::KeepLast);
 
-  // Create separate callback groups for parallel execution
-  image_callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  timer_callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  // Create a single REENTRANT callback group for all callbacks
+  // Since they're thread-safe, they can all run in parallel
+  callback_group_ = create_callback_group(rclcpp::CallbackGroupType::Reentrant);
 
   // Create subscription options with dedicated callback group
   rclcpp::SubscriptionOptions sub_options;
-  sub_options.callback_group = image_callback_group_;
+  sub_options.callback_group = callback_group_;
 
   // Create subscriber with proper callback binding
   img_sub_ = create_subscription<sensor_msgs::msg::Image>(
@@ -184,7 +184,7 @@ void FCOSObjectDetection::initialize_ros_components()
   timer_ = create_wall_timer(
     std::chrono::duration_cast<std::chrono::nanoseconds>(timer_period),
     std::bind(&FCOSObjectDetection::timer_callback, this),
-    timer_callback_group_
+    callback_group_
   );
 
   RCLCPP_INFO(get_logger(), "ROS components initialized with separate callback groups");
