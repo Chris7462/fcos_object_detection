@@ -223,19 +223,14 @@ void FCOSObjectDetection::timer_callback()
 
   // Get next image from queue
   sensor_msgs::msg::Image::SharedPtr msg;
-  bool has_image = false;
 
   {
     std::lock_guard<std::mutex> lock(mtx_);
-    if (!img_buff_.empty()) {
-      msg = img_buff_.front();
-      img_buff_.pop();
-      has_image = true;
+    if (img_buff_.empty()) {
+      return;
     }
-  }
-
-  if (!has_image) {
-    return; // No image to process
+    msg = img_buff_.front();
+    img_buff_.pop();
   }
 
   // Set processing flag
