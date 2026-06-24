@@ -237,8 +237,11 @@ void FCOSObjectDetection::timer_callback()
   processing_in_progress_.store(true);
 
   try {
-    // Convert ROS image to OpenCV format
-    cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+    // toCvShare wraps the message data directly without copying — the cv::Mat
+    // points into the ROS message buffer. We explicitly request BGR8 so
+    // cv_bridge handles any encoding conversion only when necessary.
+    cv_bridge::CvImageConstPtr cv_ptr =
+      cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8);
 
     if (!cv_ptr || cv_ptr->image.empty()) {
       RCLCPP_WARN(get_logger(), "Received empty or invalid image");
@@ -255,7 +258,8 @@ void FCOSObjectDetection::timer_callback()
       publish_detections(detection_results, msg->header, detection_confidence_threshold_);
     }
 
-    // Plot detection results
+    // Clone before plotting — cv_ptr->image is read-only (shared), we need
+    // a writable copy for plot_detections() to draw on.
     cv::Mat image_for_plot = cv_ptr->image.clone();
     fcos_trt_backend::utils::plot_detections(image_for_plot,
       detection_results, detection_confidence_threshold_);
@@ -330,7 +334,7 @@ void FCOSObjectDetection::publish_detection_result_image(
     // Convert OpenCV image back to ROS message
     cv_bridge::CvImage cv_image;
     cv_image.header = header;
-    cv_image.encoding = sensor_msgs::image_encodings::BGR8; // Always colored segmentation
+    cv_image.encoding = sensor_msgs::image_encodings::BGR8;
     cv_image.image = result_image;
 
     // Publish the result
