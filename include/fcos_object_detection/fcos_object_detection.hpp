@@ -100,7 +100,7 @@ private:
   rclcpp::CallbackGroup::SharedPtr callback_group_;
 
   // TensorRT inferencer
-  std::shared_ptr<fcos_trt_backend::FCOSBackbone> backbone_;
+  std::shared_ptr<fcos_trt_backend::FCOSTrtBackend> backbone_;
   std::shared_ptr<fcos_trt_backend::FCOSPostProcessor> postprocessor_;
 
   // ROS2 parameters
@@ -111,7 +111,7 @@ private:
   double processing_frequency_;
   int max_processing_queue_size_;
 
-  fcos_trt_backend::FCOSBackbone::Config backbone_config_;
+  fcos_trt_backend::FCOSTrtBackend::Config backbone_config_;
   fcos_trt_backend::FCOSPostProcessor::Config postprocessor_config_;
   fs::path engine_path_;
   std::string engine_filename_;

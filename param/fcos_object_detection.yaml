@@ -6,7 +6,7 @@ fcos_object_detection_node:
     detection_topic: "fcos_object_detection/detection_array"
     queue_size: 10  # QoS parameter
     processing_frequency: 50.0  # Hz
-    max_processing_queue_size: 3  # Maximum number of queue
+    max_processing_queue_size: 3  # Maximum number of queued images
 
     # Model parameters
     engine_package: "fcos_trt_backend"  # Just put the package name here. The actual path will be constructed in the code.
@@ -20,7 +20,7 @@ fcos_object_detection_node:
       log_level: 3  # 0: Internal Error, 1: Error , 2: Warning, 3: Info, 4: Verbose
 
     # PostProcessor config parameters
-    prosprocessor_config:
+    postprocessor_config:
       score_thresh: 0.2 # Score threshold for filtering
       nms_thresh: 0.6 # NMS threshold
       detections_per_img: 100 # Maximum detections per image

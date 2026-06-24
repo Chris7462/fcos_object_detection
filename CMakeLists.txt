@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.20)
 project(fcos_object_detection)
 
 set(CMAKE_BUILD_TYPE Release)
@@ -24,13 +24,13 @@ target_include_directories(fcos_object_detection_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
 
-ament_target_dependencies(fcos_object_detection_node PUBLIC
-  rclcpp
-  sensor_msgs
-  vision_msgs
-  ament_index_cpp
-  cv_bridge
-  fcos_trt_backend)
+target_link_libraries(fcos_object_detection_node PUBLIC
+  rclcpp::rclcpp
+  ${sensor_msgs_TARGETS}
+  ${vision_msgs_TARGETS}
+  ament_index_cpp::ament_index_cpp
+  cv_bridge::cv_bridge
+  fcos_trt_backend::fcos_trt_backend)
 
 target_compile_features(fcos_object_detection_node PUBLIC cxx_std_17)  # Require C++17
 
@@ -40,7 +40,10 @@ install(TARGETS fcos_object_detection_node
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME})
 
-install(DIRECTORY params
+install(DIRECTORY config
+  DESTINATION share/${PROJECT_NAME})
+
+install(DIRECTORY param
   DESTINATION share/${PROJECT_NAME})
 
 install(DIRECTORY rviz

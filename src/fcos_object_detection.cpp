@@ -8,7 +8,7 @@
 #include <opencv2/highgui.hpp>
 
 // ROS header
-#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <ament_index_cpp/get_package_share_path.hpp>
 #include <cv_bridge/cv_bridge.hpp>
 
 // local header
@@ -86,9 +86,9 @@ bool FCOSObjectDetection::initialize_parameters()
     }
 
     // Construct engine file path
-    fs::path package_path = ament_index_cpp::get_package_share_directory(engine_package);
+    fs::path package_path = ament_index_cpp::get_package_share_path(engine_package);
     engine_path_ = package_path / "engines" / engine_filename;
-    RCLCPP_INFO(get_logger(), "Parameters initialized - Loading engine form: %s.",
+    RCLCPP_INFO(get_logger(), "Parameters initialized - Loading engine from: %s.",
       engine_path_.c_str());
 
     // Backbone config
@@ -135,11 +135,11 @@ bool FCOSObjectDetection::initialize_inferencer()
   }
 
   try {
-    backbone_ = std::make_shared<fcos_trt_backend::FCOSBackbone>(engine_path_, backbone_config_);
+    backbone_ = std::make_shared<fcos_trt_backend::FCOSTrtBackend>(engine_path_, backbone_config_);
     postprocessor_ = std::make_shared<fcos_trt_backend::FCOSPostProcessor>(postprocessor_config_);
 
     if (!backbone_) {
-      RCLCPP_ERROR(get_logger(), "Failed to create FCOSBackbone instance");
+      RCLCPP_ERROR(get_logger(), "Failed to create FCOSTrtBackend instance");
       return false;
     }
 
@@ -154,7 +154,7 @@ bool FCOSObjectDetection::initialize_inferencer()
 
 void FCOSObjectDetection::initialize_ros_components()
 {
-  // Configure QoS profile for reliable image transport
+  // Configure QoS profile for image transport
   rclcpp::QoS image_qos(queue_size_);
   image_qos.reliability(rclcpp::ReliabilityPolicy::BestEffort);
   image_qos.durability(rclcpp::DurabilityPolicy::Volatile);
@@ -238,7 +238,8 @@ void FCOSObjectDetection::timer_callback()
 
   try {
     // Convert ROS image to OpenCV format
-    cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+    cv_bridge::CvImageConstPtr cv_ptr =
+      cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8);
 
     if (!cv_ptr || cv_ptr->image.empty()) {
       RCLCPP_WARN(get_logger(), "Received empty or invalid image");

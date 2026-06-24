@@ -16,7 +16,7 @@ def generate_launch_description():
     )
 
     params = join(
-        get_package_share_directory('fcos_object_detection'), 'params',
+        get_package_share_directory('fcos_object_detection'), 'param',
         'fcos_object_detection.yaml'
     )
 
