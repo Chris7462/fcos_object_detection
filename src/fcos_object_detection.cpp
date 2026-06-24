@@ -8,7 +8,7 @@
 #include <opencv2/highgui.hpp>
 
 // ROS header
-#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <ament_index_cpp/get_package_share_path.hpp>
 #include <cv_bridge/cv_bridge.hpp>
 
 // local header
@@ -86,7 +86,7 @@ bool FCOSObjectDetection::initialize_parameters()
     }
 
     // Construct engine file path
-    fs::path package_path = ament_index_cpp::get_package_share_directory(engine_package);
+    fs::path package_path = ament_index_cpp::get_package_share_path(engine_package);
     engine_path_ = package_path / "engines" / engine_filename;
     RCLCPP_INFO(get_logger(), "Parameters initialized - Loading engine form: %s.",
       engine_path_.c_str());
