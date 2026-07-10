@@ -96,7 +96,7 @@ bool FCOSObjectDetection::initialize_parameters()
     backbone_config_.width = declare_parameter<int>("backbone_config.width", 1238);
     backbone_config_.warmup_iterations =
       declare_parameter<int>("backbone_config.warmup_iterations", 2);
-    backbone_config_.log_level = static_cast<fcos_trt_backend::Logger::Severity>(
+    backbone_config_.log_level = static_cast<fcos_trt_backend::LogLevel>(
       declare_parameter<int>("backbone_config.log_level", 3)); // Set log level
 
     if (backbone_config_.width <= 0 || backbone_config_.height <= 0) {
