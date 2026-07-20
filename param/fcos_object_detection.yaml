@@ -1,7 +1,11 @@
 fcos_object_detection_node:
   ros__parameters:
     # ROS parameters for the FCOS object detection node
-    input_topic: "kitti/camera/color/left/image_raw"
+    # NOTE: input_topic is intentionally NOT set here. It has no safe default
+    # since it differs per data source (KITTI bag, CARLA simulator, live
+    # sensors, ...). It MUST be remapped via the launch file
+    # (e.g. input_topic:=carla/hero/camera/image_raw), or the node will
+    # refuse to start.
     output_topic: "fcos_object_detection/image"
     detection_topic: "fcos_object_detection/detection_array"
     queue_size: 10  # QoS parameter

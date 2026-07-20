@@ -54,8 +54,15 @@ bool FCOSObjectDetection::initialize_parameters()
 {
   try {
     // ROS2 parameters
-    input_topic_ = declare_parameter("input_topic",
-      std::string("kitti/camera/color/left/image_raw"));
+    input_topic_ = declare_parameter("input_topic", std::string(""));
+    if (input_topic_.empty()) {
+      RCLCPP_ERROR(get_logger(),
+        "input_topic is empty. This must be remapped by the launch file "
+        "(e.g. input_topic:=carla/hero/camera/image_raw) - refusing to start "
+        "with an unspecified input source.");
+      return false;
+    }
+
     output_topic_ = declare_parameter("output_topic", std::string("fcos_object_detection/image"));
     detection_topic_ = declare_parameter("detection_topic",
       std::string("fcos_object_detection/detection_array"));
@@ -88,8 +95,9 @@ bool FCOSObjectDetection::initialize_parameters()
     // Construct engine file path
     fs::path package_path = ament_index_cpp::get_package_share_path(engine_package);
     engine_path_ = package_path / "engines" / engine_filename;
-    RCLCPP_INFO(get_logger(), "Parameters initialized - Loading engine from: %s.",
-      engine_path_.c_str());
+    RCLCPP_INFO(get_logger(),
+      "Parameters initialized - Input: %s, Engine: %s",
+      input_topic_.c_str(), engine_path_.c_str());
 
     // Backbone config
     backbone_config_.height = declare_parameter<int>("backbone_config.height", 374);

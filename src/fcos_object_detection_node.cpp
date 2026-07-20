@@ -15,6 +15,13 @@ int main(int argc, char ** argv)
   // Create the node
   auto node = std::make_shared<fcos_object_detection::FCOSObjectDetection>();
 
+  // If parameter or inferencer initialization failed inside the constructor,
+  // it calls rclcpp::shutdown() internally. Detect that here and exit with
+  // a non-zero status instead of proceeding to spin a half-constructed node.
+  if (!rclcpp::ok()) {
+    return 1;
+  }
+
   // EventsCBGExecutor: uses 10-15% less CPU than MultiThreadedExecutor,
   // supports multiple ROS time sources, and manages threading internally.
   rclcpp::executors::EventsCBGExecutor executor;
